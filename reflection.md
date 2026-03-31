@@ -7,12 +7,45 @@
 - Briefly describe your initial UML design.
 - What classes did you include, and what responsibilities did you assign to each?
 
+
+Initial UML design such as walking the pet, feeding and bathing the pet these three core functions are important to the pawpal app for users to use and design overall. 
+
+To describe the UML design, it is pretty good, but more details need to be added for this pet-scheduling app to be completed. Things like registering the user pets name, and adding tasks for pet and user to be complete is crucial. Right now, more details need to be added for Initial UML design to be correct. Responsibilities I assigned to each are Making sure the user registers the pet and themselves, and tasks like walking the pet public class, feeding as private classes the pet, and making sure that their pet is healthy by the owner and that the pet is caring for the owner. These three are the basic functions in keeping the animal in good condition.
+
+
+
+STILL A: 
+___________
+
+Step 2: List Building blocks:
+(Attributes)
+ 1. walking: the location
+ 2. feeding: type of food
+ 3. bathing: type of shampoo
+
+ (methods)
+ 1. Dog on leash
+ 2. Eating food
+ 3. bathe in water
+
+```mermaid
+classDiagram
+    class Dog {
+        - String location
+        - String foodType
+        - String shampooType
+        + walkOnLeash(location: String)
+        + eatFood(foodType: String)
+        + batheInWater(shampooType: String)
+    }
+```
+
 **b. Design changes**
 
 - Did your design change during implementation?
 - If yes, describe at least one change and why you made it.
 
----
+Design changes
 
 ## 2. Scheduling Logic and Tradeoffs
 
