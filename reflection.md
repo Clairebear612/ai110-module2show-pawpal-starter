@@ -54,12 +54,15 @@ Yes there is design changes during implementation,the change I made was to have 
 - What constraints does your scheduler consider (for example: time, priority, preferences)?
 - How did you decide which constraints mattered most?
 
+The scheduler uses two separate conflict detection strategies: `detect_conflicts()` checks for overlapping durations, and `detect_same_time_conflicts()` checks for exact start-time matches. A more Pythonic version suggested by AI combined both into a single list comprehension — shorter code, but harder to read and debug because the intent of each check was buried in one dense expression.
+
 **b. Tradeoffs**
 
-- Describe one tradeoff your scheduler makes.
-- Why is that tradeoff reasonable for this scenario?
+The tradeoff I kept is **two explicit methods over one clever one**. Each method has a clear name, a clear job, and can be tested independently. The cost is slightly more code. The benefit is that a human reading the scheduler six months from now can understand what each detector does without mentally unpacking a nested comprehension.
 
----
+A second tradeoff is that `detect_same_time_conflicts()` only flags tasks at the **exact same time string** (e.g. both at `"8:00 AM"`). It does not catch a case where one task starts at `"7:50 AM"` with a 20-minute duration and another starts at `"8:00 AM"`. That overlap is only caught by `detect_conflicts()`. Combining both into `check_conflicts()` means the full picture is still surfaced — but the two checks remain separate internally, which makes each one simpler to reason about and test.
+
+
 
 ## 3. AI Collaboration
 
