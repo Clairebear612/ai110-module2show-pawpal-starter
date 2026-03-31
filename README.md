@@ -44,6 +44,41 @@ Two complementary detectors surface scheduling problems without crashing:
 **Auto-scheduling next occurrence**
 `complete_task(pet_name, task)` marks a task done and automatically creates the next occurrence for Daily and Weekly tasks, with a calculated `due_date`. Once tasks complete without creating a follow-up.
 
+
+
+## Testing PawPal+
+
+### Running the tests
+
+```bash
+python -m pytest
+```
+
+For verbose output showing each test name:
+
+```bash
+python -m pytest -v
+```
+
+### What the tests cover
+
+The suite contains **46 tests** across six areas:
+
+| Area | What is verified |
+|---|---|
+| **Task basics** | Default completion state, `mark_complete()`, `mark_incomplete()` |
+| **Pet & Owner** | Adding/removing tasks and pets, aggregate task retrieval |
+| **Sorting correctness** | Tasks return in chronological order even when added out of order; 12-hour and 24-hour time strings sort correctly together; midnight (`12:00 AM`) and noon (`12:00 PM`) parse to the right minute values |
+| **Recurrence logic** | Daily tasks appear every day; Weekly tasks appear every 7th day only; Once tasks appear on day 0 only; completing a Daily or Weekly task automatically adds the next occurrence; completing a Once task does not |
+| **Conflict detection** | Overlapping time windows are flagged; same-start-time conflicts are typed as `same_pet` or `cross_pet`; adjacent tasks (one ends exactly when the next begins) are correctly not flagged; three tasks at the same time are all captured in one conflict group |
+| **Edge cases** | Pet with no tasks, owner with no pets, nonexistent pet name filter, uppercase status filter, invalid time string raises `ValueError`, completing a task twice does not crash |
+
+### Confidence level
+
+**4 / 5 stars**
+
+The core scheduling behaviors — sorting, filtering, recurring task expansion, and both conflict detectors — are each covered by multiple tests including boundary conditions. The one gap keeping this from 5 stars: the tests run against in-memory objects only. There is no UI-level or integration test verifying that the Streamlit app surfaces conflicts or renders the sorted schedule correctly. Any bug introduced in `app.py` would not be caught by this suite.
+
 ---
 
 ## Getting started

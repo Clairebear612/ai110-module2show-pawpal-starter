@@ -295,3 +295,179 @@ def test_complete_once_task_does_not_add_new_task():
 
     assert vet.is_complete == True
     assert after_count == before_count  # no new task added
+
+
+# --- Edge case: pets and owners with no tasks ---
+
+def test_pet_with_no_tasks_returns_empty_list():
+    pet = Pet("Ghost", "Cat")
+    assert pet.get_tasks() == []
+
+def test_owner_with_no_pets_returns_empty_task_list():
+    owner = Owner("Sam")
+    assert owner.get_all_tasks() == []
+
+def test_scheduler_with_no_tasks_returns_empty_sorted_list():
+    owner = Owner("Sam")
+    scheduler = Scheduler(owner)
+    assert scheduler.get_tasks_sorted_by_time() == []
+
+def test_scheduler_get_tasks_by_nonexistent_pet_returns_empty():
+    owner = Owner("Alex")
+    bella = Pet("Bella", "Dog")
+    bella.add_task(Task("Walk", "7:00 AM", "Daily"))
+    owner.add_pet(bella)
+    scheduler = Scheduler(owner)
+    assert scheduler.get_tasks_by_pet("Nonexistent") == []
+
+def test_filter_tasks_nonexistent_pet_returns_empty():
+    owner = Owner("Alex")
+    bella = Pet("Bella", "Dog")
+    bella.add_task(Task("Walk", "7:00 AM", "Daily"))
+    owner.add_pet(bella)
+    scheduler = Scheduler(owner)
+    assert scheduler.filter_tasks(pet_name="Nonexistent") == []
+
+def test_filter_tasks_status_case_insensitive():
+    # "COMPLETED" and "completed" should both work
+    owner = Owner("Alex")
+    bella = Pet("Bella", "Dog")
+    task = Task("Walk", "7:00 AM", "Daily")
+    task.mark_complete()
+    bella.add_task(task)
+    owner.add_pet(bella)
+    scheduler = Scheduler(owner)
+    assert len(scheduler.filter_tasks(status="COMPLETED")) == 1
+    assert len(scheduler.filter_tasks(status="completed")) == 1
+
+def test_no_tasks_no_conflicts():
+    owner = Owner("Alex")
+    scheduler = Scheduler(owner)
+    assert scheduler.detect_conflicts() == []
+    assert scheduler.detect_same_time_conflicts() == []
+    assert scheduler.check_conflicts() == []
+
+
+# --- Edge case: time parsing ---
+
+def test_midnight_parses_as_zero_minutes():
+    task = Task("Midnight feed", "12:00 AM", "Once")
+    assert task.get_time_minutes() == 0
+
+def test_noon_parses_as_720_minutes():
+    task = Task("Noon walk", "12:00 PM", "Once")
+    assert task.get_time_minutes() == 720
+
+def test_24_hour_format_parses_correctly():
+    task = Task("Evening meds", "19:30", "Daily")
+    assert task.get_time_minutes() == 19 * 60 + 30
+
+def test_invalid_time_raises_value_error():
+    task = Task("Bad time", "not-a-time", "Daily")
+    try:
+        task.get_time_minutes()
+        assert False, "Expected ValueError"
+    except ValueError:
+        pass
+
+def test_mixed_12h_and_24h_tasks_sort_correctly():
+    # "7:00 AM" (420 min) and "19:00" (1140 min) should sort AM first
+    owner = Owner("Alex")
+    bella = Pet("Bella", "Dog")
+    bella.add_task(Task("Evening meds", "19:00", "Daily"))
+    bella.add_task(Task("Morning walk", "7:00 AM", "Daily"))
+    owner.add_pet(bella)
+    scheduler = Scheduler(owner)
+
+    sorted_tasks = scheduler.get_tasks_sorted_by_time()
+    assert sorted_tasks[0][1].description == "Morning walk"
+    assert sorted_tasks[1][1].description == "Evening meds"
+
+
+# --- Edge case: conflict boundaries ---
+
+def test_adjacent_tasks_do_not_conflict():
+    # Walk ends at 7:30 AM exactly when Feed starts — should NOT be a conflict
+    owner = Owner("Alex")
+    bella = Pet("Bella", "Dog")
+    bella.add_task(Task("Walk", "7:00 AM", "Daily", duration_minutes=30))
+    bella.add_task(Task("Feed", "7:30 AM", "Daily", duration_minutes=15))
+    owner.add_pet(bella)
+    scheduler = Scheduler(owner)
+
+    conflicts = scheduler.detect_conflicts()
+    assert conflicts == []
+
+def test_zero_duration_task_does_not_overlap():
+    owner = Owner("Alex")
+    bella = Pet("Bella", "Dog")
+    bella.add_task(Task("Quick check", "8:00 AM", "Daily", duration_minutes=0))
+    bella.add_task(Task("Feed", "8:00 AM", "Daily", duration_minutes=15))
+    owner.add_pet(bella)
+    scheduler = Scheduler(owner)
+
+    # A task with 0 duration starting at 8:00 ends at 8:00 — no overlap
+    conflicts = scheduler.detect_conflicts()
+    assert conflicts == []
+
+def test_three_tasks_same_time_all_pairs_reported():
+    # Three tasks at the same time for three different pets: 3 pairs expected
+    owner = Owner("Alex")
+    for name in ("Bella", "Mochi", "Rex"):
+        pet = Pet(name, "Dog")
+        pet.add_task(Task("Morning feed", "8:00 AM", "Daily"))
+        owner.add_pet(pet)
+    scheduler = Scheduler(owner)
+
+    same_time = scheduler.detect_same_time_conflicts()
+    # All three tasks land in one group; there should be one conflict entry
+    assert len(same_time) == 1
+    assert same_time[0]["type"] == "cross_pet"
+    assert len(same_time[0]["tasks"]) == 3
+
+
+# --- Edge case: recurring tasks ---
+
+def test_weekly_task_not_on_days_1_through_6():
+    owner = Owner("Alex")
+    bella = Pet("Bella", "Dog")
+    bella.add_task(Task("Weekly bath", "10:00 AM", "Weekly"))
+    owner.add_pet(bella)
+    scheduler = Scheduler(owner)
+
+    expanded = scheduler.expand_recurring_tasks(days=7)
+    days = [day for day, _, _ in expanded]
+    # Should only appear on day 0, not days 1-6
+    assert days == [0]
+
+def test_expand_recurring_tasks_days_1_only_shows_today():
+    # With days=1, a Weekly task should still appear on day 0
+    owner = Owner("Alex")
+    bella = Pet("Bella", "Dog")
+    bella.add_task(Task("Weekly bath", "10:00 AM", "Weekly"))
+    owner.add_pet(bella)
+    scheduler = Scheduler(owner)
+
+    expanded = scheduler.expand_recurring_tasks(days=1)
+    assert len(expanded) == 1
+    assert expanded[0][0] == 0
+
+def test_next_occurrence_preserves_description_and_time():
+    task = Task("Morning walk", "7:00 AM", "Daily", duration_minutes=45)
+    next_task = task.next_occurrence()
+    assert next_task.description == "Morning walk"
+    assert next_task.time == "7:00 AM"
+    assert next_task.duration_minutes == 45
+
+def test_complete_task_twice_does_not_crash():
+    owner = Owner("Alex")
+    bella = Pet("Bella", "Dog")
+    walk = Task("Walk", "7:00 AM", "Daily")
+    bella.add_task(walk)
+    owner.add_pet(bella)
+    scheduler = Scheduler(owner)
+
+    scheduler.complete_task("Bella", walk)
+    # Completing an already-complete task should not raise
+    scheduler.complete_task("Bella", walk)
+    assert walk.is_complete == True
