@@ -76,7 +76,7 @@ A second tradeoff is that `detect_same_time_conflicts()` only flags tasks at the
 - Describe one moment where you did not accept an AI suggestion as-is.
 - How did you evaluate or verify what the AI suggested?
 
----
+When I suggested saving the screenshot as uml_file.png, I redirected claude to name my file mermaidclasses.md instead. FOr uml_diagram.md I redirected by ai to mermaidclasses.md I evaluated what thev AI suggested by checking the file names, and reading the README.md file carefully before I let my AI decide on what I wanted it to choose. 
 
 ## 4. Testing and Verification
 
@@ -85,12 +85,14 @@ A second tradeoff is that `detect_same_time_conflicts()` only flags tasks at the
 - What behaviors did you test?
 - Why were these tests important?
 
+Behaviors that I tested through this project are task sorting that return the order and outcome. This behavior is important because these tests gave confidence that the scheduler class works correctly before connecting it to the Streamlit UI. 
+
 **b. Confidence**
 
 - How confident are you that your scheduler works correctly?
 - What edge cases would you test next if you had more time?
 
----
+I am 50 50 on my confidence that my schedular works correctly. Edge cases that I would look more into on this project is the schedular. I feel like I could do a little bit better making thins professionaly. 
 
 ## 5. Reflection
 
@@ -98,10 +100,16 @@ A second tradeoff is that `detect_same_time_conflicts()` only flags tasks at the
 
 - What part of this project are you most satisfied with?
 
+The project that I am most satisfied with is the end result to the Pawpal app, and having AI checking things cleanly for me throughout thid project which makes everything run smoothly. 
+
 **b. What you would improve**
 
 - If you had another iteration, what would you improve or redesign?
 
+If I had another iteration, I would improve on trying to understand the assignment better, and maybe test more on the actual pawpal app schedular by testing myself on it to double check everything and have time to remodel, and recode a few more adjustments for satisfication. 
+
 **c. Key takeaway**
 
 - What is one important thing you learned about designing systems or working with AI on this project?
+
+One important thing that I learned about designg system is the classes. I love the logic and creativity/directions behind the classes. It makes things fun, and inspires me a lot. Working with AI on this project has been a breeze and it has been really powerful for certain things within my project. 
